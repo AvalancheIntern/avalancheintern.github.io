@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FUTBOL DE AVAX</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      background-color: #000;
+    }
+
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      margin-top: 50px;
+      overflow: hidden;
+    }
+
+    #game-title {
+      font-size: 24px;
+      margin: 20px 0;
+      color: #ffffff;
+      font-family: "Comic Sans MS", cursive;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: #000;
+      border: 2px solid #ffffff;
+    }
+
+    .splash-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .splash-screen {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .message-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 3;
+    }
+
+      .message-box {
+        background-color: #ffffff;
+        padding: 20px;
+        text-align: center;
+        border-radius: 5px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 80%; /* Adjust the maximum width as desired */
+        max-height: 80%; /* Adjust the maximum height as desired */
+        overflow: auto;
+      }
+
+
+      .restart-button {
+        margin-top: 20px;
+        background-color: #ff0000;
+        color: #ffffff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        display: block;
+        margin: 0 auto; /* Add this line to center the button horizontally */
+      }
+
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 id="game-title">
+    <span style="color: #E84142">FUTBOL</span> <span style="color: #ffffff">DE</span> <span style="color: #E84142">AVAX</span>
+  </h1>
+  <div class="splash-container">
+    <img class="splash-screen" src="splash_screen.gif" alt="Splash Screen">
+  </div>
+  <canvas id="pong" width="1000" height="500"></canvas>
+</div>
+
+  <!-- Add PNGs for player paddles and ball -->
+  <img id="player1" src="player1.png" width="250" height="420" style="display: none;">
+  <img id="player2" src="player2.png" width="250" height="420" style="display: none;">
+  <img id="ball" src="ball.png" style="display: none;">
+
+  <!-- Add sound effects -->
+  <audio id="paddleSound" src="paddle_sound.mp3"></audio>
+  <audio id="goalSound1" src="goal_sound1.mp3"></audio>
+  <audio id="goalSound2" src="goal_sound2.mp3"></audio>
+  <audio id="player1WinSound" src="player1_win_sound.mp3"></audio>
+  <audio id="player2WinSound" src="player2_win_sound.mp3"></audio>
+  <audio id="startSound" src="start_sound.mp3"></audio>
+  <audio id="wallSound" src="wall_sound.mp3"></audio>
+  <audio id="backgroundMusic" src="background_music.mp3" loop></audio>
+  <audio id="futbolSound" src="futbol.mp3"></audio>
+
+  <!-- Add on-screen messages -->
+  <div class="message-overlay" id="message-overlay">
+    <div class="message-box" id="message-box">
+      <div id="message"></div>
+      <button class="restart-button" id="restart-button">Restart Game</button>
+    </div>
+  </div>
+
+  <script>
+    // Check if the browser is Chrome
+    function isChrome() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      return userAgent.includes("chrome") && !userAgent.includes("edge");
+    }
+      
+    // Pong game logic
+    const canvas = document.getElementById("pong");
+    const context = canvas.getContext("2d");
+
+    const aspectRatio = canvas.width / canvas.height;
+    const gameWidth = 1000;
+    const gameHeight = gameWidth / aspectRatio;
+
+    canvas.width = gameWidth;
+    canvas.height = gameHeight;
+
+    const player1 = {
+      x: -5,
+      y: gameHeight / 2 - 50,
+      width: gameWidth * 0.05, // Adjust the width as needed
+      height: gameHeight * 0.2,
+      color: "#ffffff",
+      dy: gameHeight * 0.05, // paddle movement speed
+      score: 0,
+    };
+
+    const player2 = {
+      x: gameWidth - (gameWidth * 0.05), // Adjust the initial x position to align with player1's width
+      y: gameHeight / 2 - 50,
+      width: gameWidth * 0.05, // Adjust the width as needed
+      height: gameHeight * 0.2,
+      color: "#ffffff",
+      dy: gameHeight * 0.004, // paddle movement speed
+      errorFactor: 0.3, // Error factor for random mistakes
+      score: 0,
+    };
+
+    const ball = {
+      x: gameWidth / 2,
+      y: gameHeight / 2,
+      radius: gameWidth * 0.015,
+      speed: gameWidth * 0.0025, // Adjust the ball speed (adjust as desired)
+      dx: gameWidth * 0.0025, // Adjust the ball x-direction speed (adjust as desired)
+      dy: gameWidth * 0.0025, // Adjust the ball y-direction speed (adjust as desired)
+      color: "#ffffff",
+      image: document.getElementById("ball"), // Ball image element
+    };
+
+    // Handle player 1 movement with keyboard up and down keys
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "ArrowUp") {
+        player1.y = Math.max(player1.y - player1.dy, 0); // Ensure paddle stays within the upper boundary
+      } else if (event.code === "ArrowDown") {
+        player1.y = Math.min(player1.y + player1.dy, gameHeight - player1.height); // Ensure paddle stays within the lower boundary
+      }
+    });
+
+    // Handle player 1 stopping movement when releasing the keyboard keys
+    document.addEventListener("keyup", (event) => {
+      if (event.code === "ArrowUp" || event.code === "ArrowDown") {
+        player1.y += 0;
+      }
+    });
+
+    // Update the canvas
+    function update() {
+      // Clear the canvas
+      context.clearRect(0, 0, gameWidth, gameHeight);
+
+      // Draw the paddles
+      const paddle1Image = document.getElementById("player1");
+      const paddle1AspectRatio = paddle1Image.width / paddle1Image.height;
+      const paddle1Width = player1.height * paddle1AspectRatio;
+      const paddle1X = player1.x;
+
+      context.drawImage(
+        paddle1Image,
+        paddle1X,
+        player1.y,
+        paddle1Width,
+        player1.height
+      );
+
+      const paddle2Image = document.getElementById("player2");
+      const paddle2AspectRatio = paddle2Image.width / paddle2Image.height;
+      const paddle2Width = player2.height * paddle2AspectRatio;
+      const paddle2X = gameWidth - paddle2Width;
+
+      context.drawImage(
+        paddle2Image,
+        paddle2X,
+        player2.y,
+        paddle2Width,
+        player2.height
+      );
+
+      // Draw the ball
+      context.drawImage(
+        ball.image,
+        ball.x - ball.radius,
+        ball.y - ball.radius,
+        ball.radius * 2,
+        ball.radius * 2
+      );
+
+      // Move the paddles
+      player2.y +=
+        ball.y > player2.y + player2.height / 2
+          ? player2.dy
+          : -player2.dy + Math.random() * player2.errorFactor;
+
+      // Restrict player 2's paddle within the bounds
+      player2.y = Math.max(0, Math.min(gameHeight - player2.height, player2.y));
+
+      // Move the ball
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      // Check collision with paddles
+      if (
+        ball.y + ball.radius > player1.y &&
+        ball.y - ball.radius < player1.y + player1.height &&
+        ball.dx < 0
+      ) {
+        if (ball.x - ball.radius < player1.x + player1.width) {
+          ball.dx = -ball.dx;
+          playPaddleSound();
+        }
+      } else if (
+        ball.y + ball.radius > player2.y &&
+        ball.y - ball.radius < player2.y + player2.height &&
+        ball.dx > 0
+      ) {
+        if (ball.x + ball.radius > player2.x) {
+          ball.dx = -ball.dx;
+          playPaddleSound();
+        }
+      }
+
+      // Check collision with walls
+      if (ball.y + ball.radius > gameHeight || ball.y - ball.radius < 0) {
+        ball.dy = -ball.dy;
+        playWallSound();
+      }
+
+      // Handle scoring
+      if (ball.x + ball.radius > gameWidth) {
+        player1.score++;
+        player1Scored();
+      } else if (ball.x - ball.radius < 0) {
+        player2.score++;
+        player2Scored();
+      }
+
+      // Update the score
+      updateScore();
+
+      // Check for the winning condition
+      if (player1.score >= 3 || player2.score >= 3) {
+        showWinningMessage();
+        return; // Stop the game
+      }
+
+      // Gradually increase ball speed with each paddle touch
+      const speedIncrement = 0.0001; // Adjust the speed increase rate (adjust as desired)
+      const maxSpeed = gameWidth * 0.01; // Maximum speed limit (adjust as desired)
+      if (Math.abs(ball.dx) < maxSpeed && Math.abs(ball.dy) < maxSpeed) {
+        ball.dx *= 1 + speedIncrement;
+        ball.dy *= 1 + speedIncrement;
+      }
+
+      // Request animation frame
+      requestAnimationFrame(update);
+    }
+
+    // Play paddle collision sound effect
+    function playPaddleSound() {
+      const paddleSound = document.getElementById("paddleSound");
+      paddleSound.play();
+    }
+
+    // Play wall collision sound effect
+    function playWallSound() {
+      const wallSound = document.getElementById("wallSound");
+      wallSound.play();
+    }
+  
+    // Play goal scoring sound effect and update score
+    function player1Scored() {
+      ballReset();
+      const goalSound1 = document.getElementById("goalSound1");
+      goalSound1.play();
+      randomizeCPU();
+    }
+
+    function player2Scored() {
+      ballReset();
+      const goalSound2 = document.getElementById("goalSound2");
+      goalSound2.play();
+      randomizeCPU();
+    }
+
+    // Randomize CPU paddle movement after a goal
+    function randomizeCPU() {
+      player2.dy = Math.random() * 2 + 1; // Adjust the range and speed of randomization as desired
+    }
+
+    // Reset ball position and direction
+    function ballReset() {
+      ball.x = gameWidth / 2;
+      ball.y = gameHeight / 2;
+      ball.speed = gameWidth * 0.0025; // Adjust the ball speed (adjust as desired)
+      ball.dx = ball.speed; // Adjust the ball x-direction speed (adjust as desired)
+      ball.dy = ball.speed; // Adjust the ball y-direction speed (adjust as desired)
+      if (player1.score % 2 === 0) {
+        ball.dx = -ball.dx;
+      }
+    }
+
+    // Update the score on the canvas
+    function updateScore() {
+      context.fillStyle = "#ffffff";
+      context.font = `${gameWidth * 0.03}px Arial`;
+      context.fillText(
+        player1.score,
+        gameWidth / 2 - gameWidth * 0.06,
+        gameHeight * 0.1
+      );
+      context.fillText(
+        player2.score,
+        gameWidth / 2 + gameWidth * 0.03,
+        gameHeight * 0.1
+      );
+    }
+
+    // Display the winning message
+    function showWinningMessage() {
+  const messageOverlay = document.getElementById("message-overlay");
+  const messageBox = document.getElementById("message-box");
+  const message = document.getElementById("message");
+
+  // Clear the message box
+  message.innerHTML = "";
+
+  if (player1.score > player2.score) {
+    const player1WinsImage = document.createElement("img");
+    player1WinsImage.src = "player1_wins.jpg";
+    player1WinsImage.alt = "Player 1 wins";
+    player1WinsImage.width = 300; // Adjust the width as desired
+    player1WinsImage.height = 200; // Adjust the height as desired
+
+    message.appendChild(player1WinsImage);
+
+    const player1WinsText = document.createElement("p");
+    player1WinsText.textContent = "Player 1 wins!";
+    message.appendChild(player1WinsText);
+  } else {
+    const player2WinsImage = document.createElement("img");
+    player2WinsImage.src = "player2_wins.jpg";
+    player2WinsImage.alt = "Player 2 wins";
+    player2WinsImage.width = 300; // Adjust the width as desired
+    player2WinsImage.height = 200; // Adjust the height as desired
+
+    message.appendChild(player2WinsImage);
+
+    const player2WinsText = document.createElement("p");
+    player2WinsText.textContent = "Player 2 wins!";
+    message.appendChild(player2WinsText);
+  }
+
+  // Play the respective win sound
+  if (player1.score > player2.score) {
+    const player1WinSound = document.getElementById("player1WinSound");
+    player1WinSound.play();
+  } else {
+    const player2WinSound = document.getElementById("player2WinSound");
+    player2WinSound.play();
+  }
+
+  // Check if the current game is the first game
+  const isFirstGame = player1.score === 3 && player2.score === 0;
+
+  // Show the restart button only if it's not the first game
+  const restartButton = document.getElementById("restart-button");
+  restartButton.style.display = isFirstGame ? "none" : "block";
+
+  // Show the message overlay
+  messageOverlay.style.display = "flex";
+}
+
+    // Function to restart the game
+    function restartGame() {
+      // Reset scores and ball position
+      player1.score = 0;
+      player2.score = 0;
+      ballReset();
+
+      // Hide the message overlay and restart button
+      const messageOverlay = document.getElementById("message-overlay");
+      const restartButton = document.getElementById("restart-button");
+      messageOverlay.style.display = "none";
+      restartButton.style.display = "none";
+
+      // Start the game loop
+      update();
+    }
+
+    // Function to start the game
+    function startGame(event) {
+      // Check if the browser is Chrome
+      if (!isChrome()) {
+        alert("Please use Google Chrome to play the game.");
+        return;
+      }
+      // Play sound effect
+      const startSound = document.getElementById("startSound");
+      const futbolSound = document.getElementById("futbolSound");
+      startSound.play();
+      futbolSound.play();
+
+      // Pause for 2 seconds before hiding the splash screen
+      setTimeout(() => {
+        // Hide the splash screen
+        const splashContainer = document.querySelector(".splash-container");
+        splashContainer.style.display = "none";
+
+        // Remove the event listener to prevent multiple game starts
+        document.removeEventListener("keydown", startGame);
+
+        // Start the game loop
+        update();
+
+        // Start the background music upon user interaction
+        const backgroundMusic = document.getElementById("backgroundMusic");
+        backgroundMusic.play();
+      }, 2500);
+    }
+
+    // Add event listener for key press to start the game
+    document.addEventListener("keydown", startGame);
+
+    // Add event listener for restart button click
+    const restartButton = document.getElementById("restart-button");
+    restartButton.addEventListener("click", restartGame);
+  </script>
+</body>
+</html>
