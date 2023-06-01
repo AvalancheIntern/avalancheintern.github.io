@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FUTBOL DE AVAX</title>
+  <title>🔺FUTBOL DE AVAX🔺</title>
   <style>
     body {
       margin: 0;
@@ -101,8 +101,9 @@
 <body>
 <div class="container">
   <h1 id="game-title">
-    <span style="color: #E84142">FUTBOL</span> <span style="color: #ffffff">DE</span> <span style="color: #E84142">AVAX</span>
+    <span style="color: #E84142">🔺FUTBOL</span> <span style="color: #ffffff">DE</span> <span style="color: #E84142">AVAX🔺</span>
   </h1>
+  <h3><span style="color: #ffffff">move using ↑↓ ⚽️ first to 21 wins ⚽️ glhf!</span></h3>
   <div class="splash-container">
     <img class="splash-screen" src="splash_screen.gif" alt="Splash Screen">
   </div>
@@ -293,7 +294,7 @@
       updateScore();
 
       // Check for the winning condition
-      if (player1.score >= 3 || player2.score >= 3) {
+      if (player1.score >= 21 || player2.score >= 21) {
         showWinningMessage();
         return; // Stop the game
       }
@@ -382,26 +383,26 @@
   if (player1.score > player2.score) {
     const player1WinsImage = document.createElement("img");
     player1WinsImage.src = "player1_wins.jpg";
-    player1WinsImage.alt = "Player 1 wins";
+    player1WinsImage.alt = "you win!!1";
     player1WinsImage.width = 300; // Adjust the width as desired
     player1WinsImage.height = 200; // Adjust the height as desired
 
     message.appendChild(player1WinsImage);
 
     const player1WinsText = document.createElement("p");
-    player1WinsText.textContent = "Player 1 wins!";
+    player1WinsText.innerHTML = "help me get out of Barcelona and to the 3XP convention!<br><br>post a screenshot of this message on twitter<br>& tag @3XPgg @GamingOnAvax @AvalancheIntern<br><br>first to do so gets a prize 👀";
     message.appendChild(player1WinsText);
   } else {
     const player2WinsImage = document.createElement("img");
     player2WinsImage.src = "player2_wins.jpg";
-    player2WinsImage.alt = "Player 2 wins";
+    player2WinsImage.alt = "you lose sry";
     player2WinsImage.width = 300; // Adjust the width as desired
     player2WinsImage.height = 200; // Adjust the height as desired
 
     message.appendChild(player2WinsImage);
 
     const player2WinsText = document.createElement("p");
-    player2WinsText.textContent = "Player 2 wins!";
+    player2WinsText.innerHTML = "sorry, you lost.<br>try again?";
     message.appendChild(player2WinsText);
   }
 
@@ -415,7 +416,7 @@
   }
 
   // Check if the current game is the first game
-  const isFirstGame = player1.score === 3 && player2.score === 0;
+  const isFirstGame = player1.score === 21;
 
   // Show the restart button only if it's not the first game
   const restartButton = document.getElementById("restart-button");
