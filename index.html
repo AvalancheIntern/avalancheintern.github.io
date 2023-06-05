@@ -148,7 +148,7 @@ i have no idea what i'm doing
   </div>
   <canvas id="pong" width="1000" height="500"></canvas>
   <div class="image-container">
-    <img class="center-image" src="connectwallet.png" alt="really?" height="40" onclick="alert('web3 integration coming soon 🙏 i swear!!!1 also pls do NOT connect to random websites with your wallet, like, ever. tysm!')">
+    <img class="center-image" src="connectwallet.png" alt="really?" height="40" onclick="alert('web3 integration coming soon 🙏 i swear!!!1 also pls do NOT connect to random websites with your wallet, like, ever. TYSM!')">
   </div>
 </div>
 
@@ -336,7 +336,7 @@ i have no idea what i'm doing
       updateScore();
 
       // Check for the winning condition
-      if (player1.score >= 1 || player2.score >= 1) {
+      if (player1.score >= 21 || player2.score >= 21) {
         showWinningMessage();
         return; // Stop the game
       }
@@ -458,7 +458,7 @@ i have no idea what i'm doing
   }
 
   // Check if the current game is the first game
-  const isFirstGame = player1.score === 1;
+  const isFirstGame = player1.score === 21;
 
   // Show the restart button only if it's not the first game
   const restartButton = document.getElementById("restart-button");
